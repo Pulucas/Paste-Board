@@ -1,3 +1,5 @@
+const HOST = "localhost";
+const PORT = 1337;
 const text = document.getElementById("texta");
 const button = document.getElementById("button");
 const board = document.getElementById("board");
@@ -5,7 +7,7 @@ const connectToInternet = document.getElementById("connectedToInternet");
 
 text.focus();
 
-const ws = new WebSocket("ws://localhost:1337");
+const ws = new WebSocket(`ws://${HOST}:${PORT}`);
 
 ws.onopen = () => {
   connectToInternet.innerText = "Connected To Server";

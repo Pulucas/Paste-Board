@@ -1,10 +1,9 @@
-const http = require('http');
-const fs = require("fs").promises;
-const url = require("url");
-const WebSocket = require('ws');
-const port = "1337";
-const host = "localhost";
+const HOST = "localhost";
+const PORT = "1337";
 const TIMEOUT = 1000 * 60 * 5;
+const fs = require("fs").promises;
+const http = require('http');
+const url = require("url");
 
 const sessions = {};
 let currentQuery;
@@ -51,8 +50,8 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.listen(port, host, () => {
-  console.log(`server listening at http://${host}:${port}/`);
+server.listen(PORT, HOST, () => {
+  console.log(`server listening at http://${HOST}:${PORT}/`);
 });
 
 
