@@ -2,7 +2,7 @@
 const HOST = "0.0.0.0";
 const PORT = "1337";
 // the url you want people to connect from
-const urlHost = "board.lucash.art" // use localhost for local testing
+const urlHost = "localhost" // use localhost for local testing
 const sessions = {};
 const TIMEOUT = 1000 * 60 * 5;
 const fs = require("fs").promises;
@@ -12,7 +12,7 @@ let currentQuery;
 
 console.log("Website up at http://" + urlHost + ":" + PORT + "/");
 const server = http.createServer((req, res) => {
-  const host = req.headers.host.slice(0,req.headers.host.indexOf(":"));
+  const host = (req.headers.host.indexOf(":") != -1) ? req.headers.host.slice(0, req.headers.host.indexOf(":")) : req.headers.host;
   if (host !== urlHost) {
     fs.readFile(__dirname + "/404/404.html")
     .then((data) => {
