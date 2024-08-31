@@ -2,6 +2,7 @@ const HOST = "localhost";
 const PORT = "1337";
 const TIMEOUT = 1000 * 60 * 5;
 const fs = require("fs").promises;
+const { fdatasync } = require("fs");
 const http = require('http');
 const url = require("url");
 
@@ -9,8 +10,18 @@ const sessions = {};
 let currentQuery;
 
 const server = http.createServer((req, res) => {
-  const parsedUrl = url.parse(req.url);
+  const host = req.headers.host.slice(0,req.headers.host.indexOf(":"));
+  if (host !== HOST) {
+    fs.readFile(__dirname + "/404/404.html")
+    .then((data) => {
+      res.setHeader("Content-Type", "text/plain");
+      res.writeHead(404);
+      res.end(data);
+    });
+    return;
+  }
 
+  const parsedUrl = url.parse(req.url);
   const endpoint = parsedUrl.pathname;
   if ((endpoint === '/board' || endpoint === '/board.html') && parsedUrl.query === null) {
     res.writeHead(302, {'location': '/'});
