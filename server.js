@@ -1,17 +1,16 @@
 // where the server runs
-const HOST = "localhost";
+const HOST = "0.0.0.0";
 const PORT = "1337";
 // the url you want people to connect from
 const urlHost = "board.lucash.art" // use localhost for local testing
+const sessions = {};
 const TIMEOUT = 1000 * 60 * 5;
 const fs = require("fs").promises;
-const { fdatasync } = require("fs");
 const http = require('http');
 const url = require("url");
-
-const sessions = {};
 let currentQuery;
 
+console.log("Website up at http://" + urlHost + ":" + PORT + "/");
 const server = http.createServer((req, res) => {
   const host = req.headers.host.slice(0,req.headers.host.indexOf(":"));
   if (host !== urlHost) {
@@ -65,7 +64,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`server listening at http://${HOST}:${PORT}/`);
+  console.log(`Websocket server listening at http://${HOST}:${PORT}/`);
 });
 
 
