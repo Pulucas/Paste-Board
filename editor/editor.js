@@ -65,6 +65,7 @@ text.addEventListener("keydown", event => {
     sendData();
     text.value = "";
     event.preventDefault();
+    text.focus()
   }
 });
 
