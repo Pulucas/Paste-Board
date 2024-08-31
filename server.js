@@ -1,5 +1,8 @@
+// where the server runs
 const HOST = "localhost";
 const PORT = "1337";
+// the url you want people to connect from
+const urlHost = "board.lucash.art" // use localhost for local testing
 const TIMEOUT = 1000 * 60 * 5;
 const fs = require("fs").promises;
 const { fdatasync } = require("fs");
@@ -11,7 +14,7 @@ let currentQuery;
 
 const server = http.createServer((req, res) => {
   const host = req.headers.host.slice(0,req.headers.host.indexOf(":"));
-  if (host !== HOST) {
+  if (host !== urlHost) {
     fs.readFile(__dirname + "/404/404.html")
     .then((data) => {
       res.setHeader("Content-Type", "text/plain");
