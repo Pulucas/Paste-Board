@@ -144,7 +144,7 @@ wss.on("connection", (ws) => {
   addSessionToList(ws, id);
 
   sessions[id].forEach((client) => {
-    client.send("Go To This URL On Your Other Devices: https://" + config.urlHost + "/editor?id=" + id);
+    client.send("Go To This URL On Your Other Devices: http://" + config.urlHost + "/editor?id=" + id);
   });
 
   timeout = newTimeout(ws);
@@ -173,6 +173,10 @@ if (use_HTTPS_server) {
     let timeout;
     const id = currentQuery;
     addSessionToList(ws, id);
+
+    sessions[id].forEach((client) => {
+      client.send("Go To This URL On Your Other Devices: https://" + config.urlHost + "/editor?id=" + id);
+    });
 
     timeout = newTimeout(ws);
     ws.onmessage = (data) => {
