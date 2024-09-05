@@ -130,10 +130,11 @@ const wss = new WebSocketServer({ server: httpServer });
 console.log(`Websocket Server up at http://${config.HOST}:${config.PORT}/`);
 
 wss.on("connection", (ws) => {
+  let timeout;
   const id = currentQuery;
   addSessionToList(ws, id);
 
-  newTimeout(ws);
+  timeout = newTimeout(ws);
 
   ws.onmessage = (data) => {
     const message = data.data;
@@ -142,7 +143,32 @@ wss.on("connection", (ws) => {
       client.send(message);
     });
     clearTimeout(timeout);
-    newTimeout(ws);
+    timeout = newTimeout(ws);
+  };
+
+  ws.onclose = () => {
+    clearTimeout(timeout);
+    removeSessionFromList(ws, id);
+  }
+});
+
+const wssHttps = new WebSocketServer({ server: httpsServer });
+console.log(`Websocket Server up at https://${config.HOST}:${parseInt(config.PORT) + 1}/`);
+
+wssHttps.on("connection", (ws) => {
+  let timeout;
+  const id = currentQuery;
+  addSessionToList(ws, id);
+
+  timeout = newTimeout(ws);
+  ws.onmessage = (data) => {
+    const message = data.data;
+    // send to all clients connected
+    sessions[id].forEach((client) => {
+      client.send(message);
+    });
+    clearTimeout(timeout);
+    timeout = newTimeout(ws);
   };
 
   ws.onclose = () => {
