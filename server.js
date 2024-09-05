@@ -63,6 +63,39 @@ httpServer.listen(config.PORT, config.HOST, () => {
   console.log(`Website up at http://${config.urlHost}:${config.PORT}/`);
 });
 
+// Websocket support on same port as server
+const WebSocketServer = require("ws").Server;
+
+const wss = new WebSocketServer({ server: httpServer });
+console.log(`Websocket Server up at http://${config.HOST}:${config.PORT}/`);
+
+wss.on("connection", (ws) => {
+  let timeout;
+  const id = currentQuery;
+  addSessionToList(ws, id);
+
+  sessions[id].forEach((client) => {
+    client.send("Go To This URL On Your Other Devices: http://" + config.urlHost + "/editor?id=" + id);
+  });
+
+  timeout = newTimeout(ws);
+
+  ws.onmessage = (data) => {
+    const message = data.data;
+    // send to all clients connected
+    sessions[id].forEach((client) => {
+      client.send(message);
+    });
+    clearTimeout(timeout);
+    timeout = newTimeout(ws);
+  };
+
+  ws.onclose = () => {
+    clearTimeout(timeout);
+    removeSessionFromList(ws, id);
+  }
+});
+
 if (use_HTTPS_server) {
   // Https Server using Let's Encrypt certificates
   const options = {
@@ -130,42 +163,7 @@ if (use_HTTPS_server) {
   httpsServer.listen(parseInt(config.PORT) + 1, config.HOST, () => {
     console.log(`Website up at https://${config.urlHost}:${parseInt(config.PORT) + 1}/`);
   });
-}
 
-// Websocket support on same port as server
-const WebSocketServer = require("ws").Server;
-
-const wss = new WebSocketServer({ server: httpServer });
-console.log(`Websocket Server up at http://${config.HOST}:${config.PORT}/`);
-
-wss.on("connection", (ws) => {
-  let timeout;
-  const id = currentQuery;
-  addSessionToList(ws, id);
-
-  sessions[id].forEach((client) => {
-    client.send("Go To This URL On Your Other Devices: http://" + config.urlHost + "/editor?id=" + id);
-  });
-
-  timeout = newTimeout(ws);
-
-  ws.onmessage = (data) => {
-    const message = data.data;
-    // send to all clients connected
-    sessions[id].forEach((client) => {
-      client.send(message);
-    });
-    clearTimeout(timeout);
-    timeout = newTimeout(ws);
-  };
-
-  ws.onclose = () => {
-    clearTimeout(timeout);
-    removeSessionFromList(ws, id);
-  }
-});
-
-if (use_HTTPS_server) {
   const wssHttps = new WebSocketServer({ server: httpsServer });
   console.log(`Websocket Server up at https://${config.HOST}:${parseInt(config.PORT) + 1}/`);
 
