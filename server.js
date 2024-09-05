@@ -1,20 +1,15 @@
-// where the server runs
-const HOST = "0.0.0.0";
-const PORT = "1337";
-// the url you want people to connect from
-const urlHost = "localhost" // use localhost for local testing
-const sessions = {};
-const TIMEOUT = 1000 * 60 * 5;
-const fs = require("fs").promises;
+const config = require('./config.json');
+const fs = require("fs");
 const http = require('http');
+const https = require('https');
 const url = require("url");
 let currentQuery;
+const sessions = {};
 
-console.log("Website up at http://" + urlHost + ":" + PORT + "/");
-const server = http.createServer((req, res) => {
+const httpServer = http.createServer((req, res) => {
   const host = (req.headers.host.indexOf(":") != -1) ? req.headers.host.slice(0, req.headers.host.indexOf(":")) : req.headers.host;
-  if (host !== urlHost) {
-    fs.readFile(__dirname + "/404/404.html")
+  if (host !== config.urlHost) {
+    fs.promises.readFile(__dirname + "/404/404.html")
     .then((data) => {
       res.setHeader("Content-Type", "text/plain");
       res.writeHead(404);
@@ -29,7 +24,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(302, {'location': '/'});
     res.end();
   } else if ((endpoint === '/board' || endpoint === '/board.html') && parsedUrl.query.slice(0,parsedUrl.query.indexOf("=")) === "id") {
-    fs.readFile(__dirname + '/editor/editor.html')
+    fs.promises.readFile(__dirname + '/editor/editor.html')
     .then((content) => {
       res.writeHead(200, {'Content-Type': 'text/html'});
       res.end(content);
@@ -40,19 +35,19 @@ const server = http.createServer((req, res) => {
       currentQuery = null;
     }
   } else if (endpoint === '/') {
-    fs.readFile(__dirname + '/homepage/index.html')
+    fs.promises.readFile(__dirname + '/homepage/index.html')
     .then((content) => {
       res.writeHead(200, {'Content-Type': 'text/html'});
       res.end(content);
     });
   } else if (endpoint === '/editor.js') {
-    fs.readFile(__dirname + '/editor/editor.js')
+    fs.promises.readFile(__dirname + '/editor/editor.js')
     .then((content) => {
       res.writeHead(200, {'Content-Type': 'text/javascript'});
       res.end(content);
     });
   } else if (endpoint === '/index.js') {
-    fs.readFile(__dirname + "/homepage/index.js")
+    fs.promises.readFile(__dirname + "/homepage/index.js")
     .then((content) => {
       res.writeHead(200, {'Content-Type': 'text/javascript'});
       res.end(content);
@@ -63,22 +58,83 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.listen(PORT, HOST, () => {
-  console.log(`Websocket server listening at http://${HOST}:${PORT}/`);
+httpServer.listen(config.PORT, config.HOST, () => {
+  console.log(`Website up at http://${config.urlHost}:${config.PORT}/`);
 });
 
+// Https Server using Let's Encrypt certificates
+const options = {
+  key: fs.readFileSync(config.certDir + config.urlHost + "/" + config['ssl-private-key']),
+  cert: fs.readFileSync(config.certDir + config.urlHost + "/" + config['ssl-public-cert'])
+}
+const httpsServer = https.createServer(options, (req, res) => {
+  const host = (req.headers.host.indexOf(":") != -1) ? req.headers.host.slice(0, req.headers.host.indexOf(":")) : req.headers.host;
+  if (host !== config.urlHost) {
+    fs.promises.readFile(__dirname + "/404/404.html")
+    .then((data) => {
+      res.setHeader("Content-Type", "text/plain");
+      res.writeHead(404);
+      res.end(data);
+    });
+    return;
+  }
+
+  const parsedUrl = url.parse(req.url);
+  const endpoint = parsedUrl.pathname;
+  if ((endpoint === '/board' || endpoint === '/board.html') && parsedUrl.query === null) {
+    res.writeHead(302, {'location': '/'});
+    res.end();
+  } else if ((endpoint === '/board' || endpoint === '/board.html') && parsedUrl.query.slice(0,parsedUrl.query.indexOf("=")) === "id") {
+    fs.promises.readFile(__dirname + '/editor/editor.html')
+    .then((content) => {
+      res.writeHead(200, {'Content-Type': 'text/html'});
+      res.end(content);
+    });
+    if (parsedUrl.query?.slice(0, parsedUrl.query.indexOf("=")) === "id") {
+      currentQuery = parsedUrl.query.slice(parsedUrl.query.indexOf("=") + 1);
+    } else {
+      currentQuery = null;
+    }
+  } else if (endpoint === '/') {
+    fs.promises.readFile(__dirname + '/homepage/index.html')
+    .then((content) => {
+      res.writeHead(200, {'Content-Type': 'text/html'});
+      res.end(content);
+    });
+  } else if (endpoint === '/editor.js') {
+    fs.promises.readFile(__dirname + '/editor/editor.js')
+    .then((content) => {
+      res.writeHead(200, {'Content-Type': 'text/javascript'});
+      res.end(content);
+    });
+  } else if (endpoint === '/index.js') {
+    fs.promises.readFile(__dirname + "/homepage/index.js")
+    .then((content) => {
+      res.writeHead(200, {'Content-Type': 'text/javascript'});
+      res.end(content);
+    })
+  } else {
+    res.writeHead(302, {'location': '/'});
+    res.end();
+  }
+})
+
+httpsServer.listen(parseInt(config.PORT) + 1, config.HOST, () => {
+  console.log(`Website up at https://${config.urlHost}:${parseInt(config.PORT) + 1}/`);
+});
 
 // Websocket support on same port as server
 const WebSocketServer = require("ws").Server;
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server: httpServer });
+console.log(`Websocket Server up at http://${config.HOST}:${config.PORT}/`);
 
-let timeout;
 wss.on("connection", (ws) => {
+  let timeout;
   const id = currentQuery;
   addSessionToList(ws, id);
 
-  newTimeout(ws);
+  timeout = newTimeout(ws);
 
   ws.onmessage = (data) => {
     const message = data.data;
@@ -87,7 +143,33 @@ wss.on("connection", (ws) => {
       client.send(message);
     });
     clearTimeout(timeout);
-    newTimeout(ws);
+    timeout = newTimeout(ws);
+  };
+
+  ws.onclose = () => {
+    clearTimeout(timeout);
+    removeSessionFromList(ws, id);
+  }
+});
+
+const wssHttps = new WebSocketServer({ server: httpsServer });
+console.log(`Websocket Server up at https://${config.HOST}:${parseInt(config.PORT) + 1}/`);
+
+wssHttps.on("connection", (ws) => {
+  let timeout;
+  const id = currentQuery;
+  addSessionToList(ws, id);
+
+  timeout = newTimeout(ws);
+
+  ws.onmessage = (data) => {
+    const message = data.data;
+    // send to all clients connected
+    sessions[id].forEach((client) => {
+      client.send(message);
+    });
+    clearTimeout(timeout);
+    timeout = newTimeout(ws);
   };
 
   ws.onclose = () => {
@@ -97,9 +179,9 @@ wss.on("connection", (ws) => {
 });
 
 function newTimeout(ws) {
-  timeout = setTimeout(() => {
+  return setTimeout(() => {
     ws.close();
-  }, TIMEOUT);
+  }, eval(config.TIMEOUT));
 }
 
 function addSessionToList(ws, id) {
