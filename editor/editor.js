@@ -35,17 +35,20 @@ ws.onmessage = (message) => {
   const p = document.createElement("p");
   p.style = "word-wrap: break-word;"
   p.innerText = message.data;
+  p.style.whiteSpace = "pre-line";
 
   const div = document.createElement("div");
   div.style.backgroundColor = "gray";
   div.style.borderRadius = "15px";
+  div.style.display = "inline-block";
   div.style.marginTop = board.hidden == true ? "" : "20px";
   div.style.maxWidth = "94%";
   div.style.paddingLeft = "20px";
   div.style.paddingRight = "20px";
   div.style.paddingTop = "10px";
   div.style.paddingBottom = "10px";
-  div.style.width = "min-content";
+  div.style.width = "auto";
+  div.style.display = "inline-block";
   // div.style.marginLeft = "auto";
   // div.style.marginRight = "auto";
   
