@@ -33,36 +33,37 @@ ws.onerror = (err) => {
 
 ws.onmessage = (message) => {
   const p = document.createElement("p");
-  p.style = "word-wrap: break-word;"
   p.innerText = message.data;
+  p.style.overflowWrap = "break-word";
   p.style.whiteSpace = "pre-line";
 
   const div = document.createElement("div");
   div.style.backgroundColor = "gray";
   div.style.borderRadius = "15px";
-  div.style.display = "inline-block";
+  div.style.display = "block";
   div.style.marginTop = board.hidden == true ? "" : "20px";
   div.style.maxWidth = "94%";
   div.style.paddingLeft = "20px";
   div.style.paddingRight = "20px";
   div.style.paddingTop = "10px";
   div.style.paddingBottom = "10px";
-  div.style.width = "auto";
-  div.style.display = "inline-block";
+  div.style.width = "fit-content";
   // div.style.marginLeft = "auto";
   // div.style.marginRight = "auto";
   
   div.appendChild(p);
 
-  const button = document.createElement("button");
-  button.textContent = "Copy";
-  button.style = "width: 100px; height: 30px; border-radius: 10px;";
-  button.addEventListener("click", (event) => {
-    navigator.clipboard.writeText(p.innerText);
-    text.focus();
-  });
+  if (window.location.hostname === "localhost" || window.location.protocol === "https:") {
+    const button = document.createElement("button");
+    button.textContent = "Copy";
+    button.style = "width: 100px; height: 30px; border-radius: 10px;";
+    button.addEventListener("click", (event) => {
+      navigator.clipboard.writeText(p.innerText);
+      text.focus();
+    });
 
-  div.appendChild(button);
+    div.appendChild(button);
+  }
 
   board.appendChild(div);
 
