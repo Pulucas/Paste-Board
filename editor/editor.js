@@ -70,7 +70,6 @@ text.addEventListener("keydown", event => {
   if (event.key == "Enter" && event.shiftKey) return;
   if (event.key == "Enter") {
     sendData();
-    text.value = "";
     event.preventDefault();
     text.focus()
   }
@@ -78,5 +77,6 @@ text.addEventListener("keydown", event => {
 
 function sendData() {
   ws.send(text.value);
+  text.value = "";
   text.focus();
 }
