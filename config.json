@@ -1,0 +1,9 @@
+{
+  "HOST": "0.0.0.0", "comment": "where the server runs",
+  "PORT": "1337",
+  "urlHost": "localhost", "comment2": "the url you want people to connect from. use localhost for local testing",
+  "TIMEOUT": "1000 * 60 * 5",
+  "certDir": "/etc/letsencrypt/live/",
+  "ssl-private-key": "privkey.pem",
+  "ssl-public-cert": "fullchain.pem"
+}

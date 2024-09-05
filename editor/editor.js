@@ -1,5 +1,6 @@
-const HOST = "localhost";
-const PORT = 1337;
+const HTTPPORT = "1337";
+const HTTPSPORT = "1338";
+const urlHost = "localhost";
 const text = document.getElementById("texta");
 const button = document.getElementById("button");
 const board = document.getElementById("board");
@@ -7,7 +8,13 @@ const connectToInternet = document.getElementById("connectedToInternet");
 
 text.focus();
 
-const ws = new WebSocket(`ws://${HOST}:${PORT}`);
+if (location.protocol === "http:") {
+  var ws = new WebSocket(`ws://${urlHost}:${HTTPPORT}`);
+} else if (location.protocol === "https:") {
+  var ws = new WebSocket(`wss://${urlHost}:${HTTPSPORT}`);
+} else {
+  console.log("Can't connect to websocket: unknown protocol. Please use http or https.");
+}
 
 ws.onopen = () => {
   connectToInternet.innerText = "Connected To Server";
