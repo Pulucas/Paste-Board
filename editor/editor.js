@@ -1,23 +1,36 @@
 const HTTPPORT = "1337";
 const HTTPSPORT = "1338";
-const urlHost = "localhost";
-const text = document.getElementById("texta");
+const urlHost = window.location.hostname;
+const query = window.location.search;
+const id = query.split("=")[1].split("&")[0];
 const button = document.getElementById("button");
 const board = document.getElementById("board");
 const connectToInternet = document.getElementById("connectedToInternet");
+const text = document.getElementById("texta");
 
 text.focus();
 
-if (location.protocol === "http:") {
-  var ws = new WebSocket(`ws://${urlHost}:${HTTPPORT}`);
-} else if (location.protocol === "https:") {
-  var ws = new WebSocket(`wss://${urlHost}:${HTTPSPORT}`);
+if (window.location.protocol === "http:") {
+  var ws = new WebSocket(`ws://${window.location.hostname}:${HTTPPORT}`);
+} else if (window.location.protocol === "https:") {
+  var ws = new WebSocket(`wss://${window.location.hostname}:${HTTPSPORT}`);
 } else {
   console.log("Can't connect to websocket: unknown protocol. Please use http or https.");
 }
 
 ws.onopen = () => {
   connectToInternet.innerText = "Connected To Server";
+
+  if (urlHost === "localhost") {
+    const message = "Go To This URL On This Device: http://localhost/editor?id=" + id;
+    addMessage(message, true);
+  } else if (window.location.protocol === "https:") {
+    const message = "Go To This URL On Your Other Devices: https://" + window.location.host + "/editor?id=" + id;
+    addMessage(message, true);
+  } else {
+    const message = "Go To This URL On Your Other Devices: http://" + window.location.host + "/editor?id=" + id;
+    addMessage(message, true)
+  }
 }
 
 ws.onclose = () => {
@@ -32,8 +45,27 @@ ws.onerror = (err) => {
 }
 
 ws.onmessage = (message) => {
+  addMessage(message.data, false)
+}
+
+text.addEventListener("keydown", event => {
+  if (event.key == "Enter" && event.shiftKey) return;
+  if (event.key == "Enter") {
+    sendData();
+    event.preventDefault();
+    text.focus()
+  }
+});
+
+function sendData() {
+  ws.send(text.value);
+  text.value = "";
+  text.focus();
+}
+
+function addMessage(message, isURLMessage) {
   const p = document.createElement("p");
-  p.innerText = message.data;
+  p.innerText = message;
   p.style.overflowWrap = "break-word";
   p.style.whiteSpace = "pre-line";
 
@@ -58,7 +90,11 @@ ws.onmessage = (message) => {
     button.textContent = "Copy";
     button.style = "width: 100px; height: 30px; border-radius: 10px;";
     button.addEventListener("click", (event) => {
-      navigator.clipboard.writeText(p.innerText);
+      if (isURLMessage) {
+        navigator.clipboard.writeText(`${window.location.protocol}//${urlHost}/editor?id=${id}`);
+      } else {
+        navigator.clipboard.writeText(p.innerText);
+      }
       text.focus();
     });
 
@@ -68,19 +104,4 @@ ws.onmessage = (message) => {
   board.appendChild(div);
 
   board.hidden = false;
-}
-
-text.addEventListener("keydown", event => {
-  if (event.key == "Enter" && event.shiftKey) return;
-  if (event.key == "Enter") {
-    sendData();
-    event.preventDefault();
-    text.focus()
-  }
-});
-
-function sendData() {
-  ws.send(text.value);
-  text.value = "";
-  text.focus();
 }
