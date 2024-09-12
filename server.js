@@ -21,17 +21,14 @@ const httpServer = http.createServer((req, res) => {
 
   const parsedUrl = url.parse(req.url);
   const endpoint = parsedUrl.pathname;
-  if ((endpoint === '/board' || endpoint === '/board.html') && parsedUrl.query === null) {
-    res.writeHead(302, {'location': '/'});
-    res.end();
-  } else if ((endpoint === '/board' || endpoint === '/board.html') && parsedUrl.query.slice(0,parsedUrl.query.indexOf("=")) === "id") {
+  if ((endpoint === '/board' || endpoint === '/board.html') && parsedUrl.query.slice(0,parsedUrl.query.indexOf("=")) === "id") {
     fs.promises.readFile(__dirname + '/editor/editor.html')
     .then((content) => {
       res.writeHead(200, {'Content-Type': 'text/html'});
       res.end(content);
     });
     if (parsedUrl.query?.slice(0, parsedUrl.query.indexOf("=")) === "id") {
-      currentQuery = parsedUrl.query.slice(parsedUrl.query.indexOf("=") + 1);
+      currentQuery = parsedUrl.query.split("=")[1].split("&")[0];
     } else {
       currentQuery = null;
     }
@@ -73,8 +70,6 @@ wss.on("connection", (ws) => {
   let timeout;
   const id = currentQuery;
   addSessionToList(ws, id);
-
-  ws.send("Go To This URL On Your Other Devices: http://" + config.urlHost + "/editor?id=" + id);
 
   timeout = newTimeout(ws);
 
@@ -124,7 +119,7 @@ if (use_HTTPS_server) {
         res.end(content);
       });
       if (parsedUrl.query?.slice(0, parsedUrl.query.indexOf("=")) === "id") {
-        currentQuery = parsedUrl.query.slice(parsedUrl.query.indexOf("=") + 1);
+        currentQuery = parsedUrl.query.split("=")[1].split("&")[0];
       } else {
         currentQuery = null;
       }
@@ -169,8 +164,6 @@ if (use_HTTPS_server) {
     let timeout;
     const id = currentQuery;
     addSessionToList(ws, id);
-
-    ws.send("Go To This URL On Your Other Devices: https://" + config.urlHost + "/editor?id=" + id);
 
     timeout = newTimeout(ws);
     ws.onmessage = (data) => {
